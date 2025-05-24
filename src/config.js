@@ -1,8 +1,10 @@
+require("dotenv").config();
+
 const nconf = require("nconf");
 
 nconf
-  .env() // ✅ Load from environment (.env / Glitch secrets)
+  .env()                // ✅ Loads from .env file
   .argv()
-  .file({ file: "./config.json" }); // Optional config.json fallback
+  .file({ file: "./config.json" }); // Optional
 
 module.exports = nconf;
