@@ -54,14 +54,25 @@ app.get("/callback", passport.authenticate("discord", { failureRedirect: "/" }),
     });
 
     const user = await userResponse.json();
+
     const flags = user.public_flags || 0;
     const isHypeSquad = (flags & (1 << 6)) || (flags & (1 << 7)) || (flags & (1 << 8)) ? 1 : 0;
+    const hasNitro = user.premium_type === 1 || user.premium_type === 2 ? 1 : 0;
+    const accountCreatedAt = new Date(Number((BigInt(user.id) >> 22n) + 1420070400000n));
+    const accountAgeDays = Math.floor((Date.now() - accountCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+    const emailVerified = user.verified ? 1 : 0;
+    const hasAnyBadge = flags > 0 ? 1 : 0;
 
     const metadata = {
-      is_hypesquad: isHypeSquad
+      is_hypesquad: isHypeSquad,
+      account_age_days: accountAgeDays,
+      has_nitro: hasNitro,
+      email_verified: emailVerified,
+      public_flags: hasAnyBadge
     };
 
-    // Send the metadata to Discord
+    console.log("Metadata being sent to Discord:", metadata);
+
     await axios.put(
       `https://discord.com/api/v10/users/@me/applications/${config.get("DISCORD_CLIENT_ID")}/role-connection`,
       {
@@ -107,12 +118,18 @@ app.get("/api/discord-user", async (req, res) => {
 
   const flags = user.public_flags || 0;
   const isHypeSquad = (flags & (1 << 6)) || (flags & (1 << 7)) || (flags & (1 << 8)) ? 1 : 0;
+  const hasNitro = user.premium_type === 1 || user.premium_type === 2 ? 1 : 0;
+  const accountCreatedAt = new Date(Number((BigInt(user.id) >> 22n) + 1420070400000n));
+  const accountAgeDays = Math.floor((Date.now() - accountCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+  const emailVerified = user.verified ? 1 : 0;
+  const hasAnyBadge = flags > 0 ? 1 : 0;
 
   const metadata = [
-    {
-      key: "is_hypesquad",
-      value: isHypeSquad
-    }
+    { key: "is_hypesquad", value: isHypeSquad },
+    { key: "account_age_days", value: accountAgeDays },
+    { key: "has_nitro", value: hasNitro },
+    { key: "email_verified", value: emailVerified },
+    { key: "public_flags", value: hasAnyBadge }
   ];
 
   res.json({ metadata });
